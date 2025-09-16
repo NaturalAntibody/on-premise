@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project-management-api
+  namespace: naturalantibody-platform
+  labels:
+    app: project-management-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project-management-api
+  template:
+    metadata:
+      labels:
+        app: project-management-api
+    spec:
+      containers:
+        - name: project-management-api
+          image: example-registry.io/example-project/project-management:latest
+          command: ["poetry", "run", "uvicorn", "project_management.infrastructure.app:app", "--host", "0.0.0.0"]
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz/
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthz/
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz/
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-project-management
+                  key: password
+            - name: MONGODB_URL
+              value: mongodb://project-management:$(MONGODB_PASSWORD)@mongodb-svc.naturalantibody-platform-mongo.svc.cluster.local/project_management?ssl=false&authSource=admin
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: username
+            - name: RABBITMQ_DEFAULT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: password
+            - name: RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: host
+            - name: CELERY_BROKER_URL
+              value: amqp://$(RABBITMQ_DEFAULT_USER):$(RABBITMQ_DEFAULT_USER_PASSWORD)@$(RABBITMQ_HOST)/
+            - name: CELERY_RESULT_BACKEND
+              value: project_management.infrastructure.celery_utils.backend:ExtendedMongoBackend+$(MONGODB_URL)
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: token-secret
+                  key: password
+            - name: REDIS_URL
+              value: redis://redis.example-redis.svc.cluster.local
+            - name: USERS_API_URL
+              value: http://users.naturalantibody-platform.svc.cluster.local
+            - name: SEARCH_API_URL
+              value: http://search-api.naturalantibody-platform.svc.cluster.local
+          ports:
+            - name: http
+              containerPort: 80
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 200m
+              memory: 1024Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+
+      tolerations:
+      - key: "eks.amazonaws.com/compute-type"
+        operator: "Equal"
+        value: "fargate"
+        effect: "NoSchedule"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: naturalantibody-platform
+  name: project-management-api
+  labels:
+    app: project-management-api
+spec:
+  selector:
+    app: project-management-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
