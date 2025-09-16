@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mailer-tasks
+  name: mailer-tasks
+  namespace: naturalantibody-platform
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: mailer-tasks
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mailer-tasks
+  name: mailer-tasks
+  namespace: naturalantibody-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailer-tasks
+  template:
+    metadata:
+      labels:
+        app: mailer-tasks
+    spec:
+      containers:
+      - command:
+        - poetry
+        - run
+        - celery
+        - --app
+        - mailer.infrastructure.celery_app:celery_app
+        - worker
+        - --queues
+        - mailer-events
+        - --concurrency
+        - "1"
+        - -l
+        - INFO
+        - -E
+        env:
+          - name: MONGODB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-mailer
+                key: password
+          - name: MONGODB_URL
+            value: mongodb://mailer:$(MONGODB_PASSWORD)@mongodb-svc.naturalantibody-platform-mongo.svc.cluster.local/mailer?ssl=false&authSource=admin
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: username
+          - name: RABBITMQ_DEFAULT_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: password
+          - name: RABBITMQ_HOST
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: host
+          - name: CELERY_BROKER_URL
+            value: amqp://$(RABBITMQ_DEFAULT_USER):$(RABBITMQ_DEFAULT_USER_PASSWORD)@$(RABBITMQ_HOST)/
+          - name: CELERY_RESULT_BACKEND
+            value: mailer.infrastructure.celery_utils.backend:ExtendedMongoBackend+$(MONGODB_URL)
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: token-secret
+                key: password
+          - name: REDIS_URL
+            value: redis://redis.abstudio.svc.cluster.local
+          - name: USERS_API_URL
+            value: http://users.naturalantibody-platform.svc.cluster.local
+        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "1024Mi"
+          limits:
+            cpu: "200m"
+            memory: "1024Mi"
+        name: mailer-tasks
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - effect: NoSchedule
+        key: eks.amazonaws.com/compute-type
+        operator: Equal
+        value: fargate

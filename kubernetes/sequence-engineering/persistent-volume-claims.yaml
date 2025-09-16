@@ -1,0 +1,48 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-data
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: data-filesystem
+  directoryPerms: "755"
+  basePath: "/data"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-uploads
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: uploads-filesystem
+  directoryPerms: "755"
+  basePath: "/uploads"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-claim-sequence-engineering
+  namespace: naturalantibody-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: data-storageclass
+  resources:
+    requests:
+      storage: 30Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-claim-uploads-sequence-engineering
+  namespace: naturalantibody-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: uploads-storageclass
+  resources:
+    requests:
+      storage: 30Gi

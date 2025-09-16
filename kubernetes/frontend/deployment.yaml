@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: naturalantibody-platform
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-frontend-repository-public:latest
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /api/healthz
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: REDIS_URL
+              value: redis.naturalantibody-platform-redis.svc.cluster.local:6379
+            - name: REDIS_USERS_DB
+              value: '1'
+            - name: GRAPHQL_ENDPOINT
+              value: http://api-gateway.naturalantibody-platform.svc.cluster.local/graphql
+            - name: APP_SERVER_URL
+              value: http://frontend.naturalantibody-platform.svc.cluster.local
+            - name: USERS_API_URL
+              value: http://users.naturalantibody-platform.svc.cluster.local
+            - name: SEQUENCE_ENGINEERING_API_URL
+              value: http://sequence-engineering-api.naturalantibody-platform.svc.cluster.local
+            - name: SEARCH_API_URL
+              value: http://search-api.naturalantibody-platform.svc.cluster.local
+            - name: PROJECT_MANAGEMENT_API_URL
+              value: http://project-management-api.naturalantibody-platform.svc.cluster.local
+            - name: COOKIE_DOMAIN
+              value: .example.com
+            - name: TWOFA_TRANSITION_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: TWOFA_TRANSITION_TOKEN_SECRET
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: AUTH_SECRET
+            - name: CSRF_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CSRF_SECRET
+            - name: GRAPHQL_DOC_HOST
+              value: api-docs.platform.example.com
+            - name: DOCS_HOST
+              value: docs.platform.example.com
+            - name: IS_ON_PREM_ENV
+              value: "true"
+            - name: NEXT_PUBLIC_DOCS_URL
+              value: https://docs.platform.example.com
+            - name: NEXT_PUBLIC_GRAPHQL_CLIENT_ENDPOINT
+              value: https://platform-api.example.com/graphql
+            - name: NEXT_PUBLIC_IS_ON_PREM_ENV
+              value: "true"
+            - name: DOCS_URL
+              value: https://docs.platform.example.com
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: token-secret
+                  key: password
+            - name: NEXTAUTH_URL
+              value: https://platform.example.com
+            - name: AUTH0_ISSUER
+              value: https://example.eu.auth0.com
+            - name: AUTH0_CLIENT_ID
+              value: example-client-id
+            - name: AUTH0_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: AUTH0_CLIENT_SECRET
+          ports:
+            - name: http
+              containerPort: 80
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+              memory: 768Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - key: "eks.amazonaws.com/compute-type"
+          operator: "Equal"
+          value: "fargate"
+          effect: "NoSchedule"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: naturalantibody-platform
+  name: frontend
+  labels:
+    app: frontend
+    app.kubernetes.io/instance: example-ui
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /api/healthz
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
