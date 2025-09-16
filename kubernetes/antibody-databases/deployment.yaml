@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: search-api
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-antibody-databases-repository-public:latest
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-antibody-databases-repository-public:v1.0.0
           command: ["poetry", "run", "uvicorn", "antibody_databases.infrastructure.app:fastapi_app", "--host", "0.0.0.0"]
           livenessProbe:
             httpGet:

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mailer-api
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:latest
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:v1.0.0
           command: ["poetry", "run", "uvicorn", "mailer.infrastructure.app:app", "--host", "0.0.0.0"]
           livenessProbe:
             httpGet:

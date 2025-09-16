@@ -24,7 +24,7 @@ spec:
           claimName: efs-claim-uploads-sequence-engineering
       containers:
         - name: sequence-engineering-api
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:latest
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:v1.0.0
           command: ["poetry", "run", "uvicorn", "sequence_engineering.infrastructure.app:app", "--host", "0.0.0.0"]
           volumeMounts:
             - name: persistent-storage

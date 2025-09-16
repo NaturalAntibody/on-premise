@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-gateway-repository-public:latest
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-gateway-repository-public:v1.0.0
           livenessProbe:
             httpGet:
               scheme: HTTP

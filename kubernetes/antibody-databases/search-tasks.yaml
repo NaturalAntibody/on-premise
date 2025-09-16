@@ -81,7 +81,7 @@ spec:
             value: redis://redis.naturalantibody-platform-redis.svc.cluster.local
           - name: USERS_API_URL
             value: http://users.naturalantibody-platform.svc.cluster.local
-        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-antibody-databases-repository-public:latest
+        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-antibody-databases-repository-public:v1.0.0
         imagePullPolicy: Always
         resources:
           requests:

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: project-management-api
-          image: example-registry.io/example-project/project-management:latest
+          image: example-registry.io/example-project/project-management:v1.0.0
           command: ["poetry", "run", "uvicorn", "project_management.infrastructure.app:app", "--host", "0.0.0.0"]
           livenessProbe:
             httpGet:

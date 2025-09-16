@@ -139,7 +139,7 @@ spec:
             value: /data/naturalness/models
           - name: NATURALNESS_DATA_DIR
             value: /data/naturalness/data
-        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:latest
+        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:v1.0.0
         imagePullPolicy: Always
         resources:
           requests:

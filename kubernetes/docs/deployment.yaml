@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: docs
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-docs-repository-public:latest
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-docs-repository-public:v1.0.0
           livenessProbe:
             httpGet:
               scheme: HTTP
