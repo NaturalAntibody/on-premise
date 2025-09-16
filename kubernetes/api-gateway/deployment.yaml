@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: naturalantibody-platform
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-gateway-repository-public:v1.0.0
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: token-secret
+                  key: password
+            - name: REDIS_URL
+              value: redis.naturalantibody-platform-redis.svc.cluster.local:6379
+            - name: REDIS_TASKS_DB
+              value: "0"
+            - name: REDIS_USERS_DB
+              value: "1"
+            - name: SEARCH_API_URL
+              value: http://search-api.naturalantibody-platform.svc.cluster.local
+            - name: USERS_API_URL
+              value: http://users.naturalantibody-platform.svc.cluster.local
+            - name: SEQUENCE_ENGINEERING_API_URL
+              value: http://sequence-engineering-api.naturalantibody-platform.svc.cluster.local
+            - name: PROJECT_MANAGEMENT_API_URL
+              value: http://project-management-api.naturalantibody-platform.svc.cluster.local
+            - name: COOKIE_DOMAIN
+              value: .example.com
+            - name: IS_ON_PREM_ENV
+              value: "true"
+            - name: UI_URL
+              value: https://platform.example.com
+          ports:
+            - name: http
+              containerPort: 80
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+              memory: 768Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "eks.amazonaws.com/compute-type"
+        operator: "Equal"
+        value: "fargate"
+        effect: "NoSchedule"

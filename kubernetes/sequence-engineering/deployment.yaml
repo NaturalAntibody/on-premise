@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sequence-engineering-api
+  namespace: naturalantibody-platform
+  labels:
+    app: sequence-engineering-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sequence-engineering-api
+  template:
+    metadata:
+      labels:
+        app: sequence-engineering-api
+    spec:
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: efs-claim-sequence-engineering
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: efs-claim-uploads-sequence-engineering
+      containers:
+        - name: sequence-engineering-api
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:v1.0.0
+          command: ["poetry", "run", "uvicorn", "sequence_engineering.infrastructure.app:app", "--host", "0.0.0.0"]
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /data
+            - name: uploads
+              mountPath: /uploads
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz/
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthz/
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz/
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-sequence-engineering
+                  key: password
+            - name: MONGODB_URL
+              value: mongodb://sequence-engineering:$(MONGODB_PASSWORD)@mongodb-svc.naturalantibody-platform-mongo.svc.cluster.local/sequence_engineering?authSource=admin&ssl=false
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: token-secret
+                  key: password
+            - name: UPLOAD_DIR
+              value: file:///uploads
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: username
+            - name: RABBITMQ_DEFAULT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: password
+            - name: RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-default-user
+                  key: host
+            - name: USERS_API_URL
+              value: http://users.naturalantibody-platform.svc.cluster.local
+            - name: CELERY_BROKER_URL
+              value: amqp://$(RABBITMQ_DEFAULT_USER):$(RABBITMQ_DEFAULT_USER_PASSWORD)@$(RABBITMQ_HOST)/
+            - name: CELERY_RESULT_BACKEND
+              value: sequence_engineering.infrastructure.celery_utils.backend:ExtendedMongoBackend+$(MONGODB_URL)
+            - name: REDIS_URL
+              value: redis://redis.naturalantibody-platform-redis.svc.cluster.local
+            - name: IMMUNOGENICITY_MODEL_DIR
+              value: /data/immunogenicity/final_model.h5
+            - name: ABDIVER_PROFILES_DIR
+              value: /data/profiles
+            - name: TAP_DATA_DIR
+              value: /data
+            - name: DEEPDIVER_MODEL_DIR
+              value: /data/deepdiver/None_post_(4, 16, 128).h5
+            - name: PSH_MODEL_DIR
+              value: /data/developability/psh
+            - name: SFVCSP_MODEL_DIR
+              value: /data/developability/sfvcsp
+            - name: STRUCTURE_PREDICTION_MODELS_DIR
+              value: /data/structure_prediction/models
+            - name: CA_HEAVY_MODEL_DIR
+              value: /data/structure_prediction/models/heavy
+            - name: CA_LIGHT_MODEL_DIR
+              value: /data/structure_prediction/models/light
+            - name: GERMLINES_FILE
+              value: /data/germlines.json
+            - name: LIABILITIES_DATA_PATH
+              value: /data/liabilities
+            - name: PARATOPE_MODEL_DIR
+              value: /data/paratope
+            - name: PARATOPE_PREDICTION_MODEL_DIR
+              value: /data/paratope/ParatopePredictionFineTuned
+            - name: ANTIBODY_TOKENIZER_MODEL_DIR
+              value: /data/paratope/antibody-tokenizer
+            - name: TASKS_STORAGE_URI
+              value: file:///data/tasks
+            - name: DOCKING_STRUCTURES_DIR
+              value: docking_structures
+            - name: NANOBERT_MODEL_DIR
+              value: /data/nanobert
+            - name: NATURALNESS_MODEL_DIR
+              value: /data/naturalness/models
+            - name: NATURALNESS_DATA_DIR
+              value: /data/naturalness/data
+          ports:
+            - name: http
+              containerPort: 80
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1024Mi
+            limits:
+              cpu: 500m
+              memory: 2048Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "eks.amazonaws.com/compute-type"
+        operator: "Equal"
+        value: "fargate"
+        effect: "NoSchedule"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: naturalantibody-platform
+  name: sequence-engineering-api
+  labels:
+    app: sequence-engineering-api
+spec:
+  selector:
+    app: sequence-engineering-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000

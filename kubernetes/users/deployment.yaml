@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: users
+  name: users
+  namespace: naturalantibody-platform
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: users
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: users
+  name: users
+  namespace: naturalantibody-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+      - command:
+        - poetry
+        - run
+        - uvicorn
+        - users.infrastructure.app:app
+        - --host
+        - 0.0.0.0
+        env:
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb-users
+        - name: MONGODB_URL
+          value: mongodb://users:$(MONGODB_PASSWORD)@mongodb-svc.naturalantibody-platform-mongo.svc.cluster.local/users?ssl=false&authSource=admin
+        - name: MAILER
+          value: MICROSERVICE
+        - name: FORGOT_PASSWORD_URL
+          value: https://platform.example.com/forgot-password/reset
+        - name: MAILER_API_URL
+          value: http://mailer.naturalantibody-platform-mongo.svc.cluster.local
+        - name: CHANGE_MAIL_URL
+          value: https://platform.example.com/reset-email
+        - name: REDIS_URL
+          value: redis://redis.naturalantibody-platform-redis.svc.cluster.local
+        - name: REDIS_RATE_LIMIT_DATABASE
+          value: '15'
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: token-secret
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-users-repository-public:v1.0.0
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 120
+          periodSeconds: 10
+        name: users
+        ports:
+        - containerPort: 80
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /healthz
+            port: 8000
+          periodSeconds: 10
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - effect: NoSchedule
+        key: eks.amazonaws.com/compute-type
+        operator: Equal
+        value: fargate

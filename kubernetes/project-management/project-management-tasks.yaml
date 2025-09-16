@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: project-management-tasks
+  name: project-management-tasks
+  namespace: naturalantibody-platform
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: project-management-tasks
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: project-management-tasks
+  name: project-management-tasks
+  namespace: naturalantibody-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project-management-tasks
+  template:
+    metadata:
+      labels:
+        app: project-management-tasks
+    spec:
+      containers:
+      - command:
+        - poetry
+        - run
+        - celery
+        - --app
+        - project_management.infrastructure.celery_app:celery_app
+        - worker
+        - --queues
+        - project-management-sequence-engineering-events
+        - --concurrency
+        - "1"
+        - -l
+        - INFO
+        - -E
+        env:
+          - name: MONGODB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-project-management
+                key: password
+          - name: MONGODB_URL
+            value: mongodb://project-management:$(MONGODB_PASSWORD)@mongodb-svc.naturalantibody-platform-mongo.svc.cluster.local/project_management?ssl=false&authSource=admin
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: username
+          - name: RABBITMQ_DEFAULT_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: password
+          - name: RABBITMQ_HOST
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-default-user
+                key: host
+          - name: CELERY_BROKER_URL
+            value: amqp://$(RABBITMQ_DEFAULT_USER):$(RABBITMQ_DEFAULT_USER_PASSWORD)@$(RABBITMQ_HOST)/
+          - name: CELERY_RESULT_BACKEND
+            value: project_management.infrastructure.celery_utils.backend:ExtendedMongoBackend+$(MONGODB_URL)
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: token-secret
+                key: password
+          - name: REDIS_URL
+            value: redis://redis.abstudio.svc.cluster.local
+          - name: USERS_API_URL
+            value: http://users.naturalantibody-platform.svc.cluster.local
+        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-project-management-repository-public:v1.0.0
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "1024Mi"
+          limits:
+            cpu: "200m"
+            memory: "1024Mi"
+        name: project-management-tasks
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - effect: NoSchedule
+        key: eks.amazonaws.com/compute-type
+        operator: Equal
+        value: fargate

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-docs
+  namespace: naturalantibody-platform
+  labels:
+    app: api-docs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-docs
+  template:
+    metadata:
+      labels:
+        app: api-docs
+    spec:
+      containers:
+        - name: api-docs
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-docs-repository-public:v1.0.0
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /
+              port: 5000
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /
+              port: 5000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: token-secret
+                  key: password
+            - name: UI_URL
+              value: https://platform.example.com
+            - name: APP_URL
+              value: https://api-docs.platform.example.com
+            - name: PORT
+              value: "5000"
+          ports:
+            - name: http
+              containerPort: 80
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 100m
+              memory: 384Mi
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "eks.amazonaws.com/compute-type"
+        operator: "Equal"
+        value: "fargate"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: naturalantibody-platform
+  name: api-docs
+  labels:
+    app: api-docs
+  annotations:
+    alb.ingress.kubernetes.io/success-codes: 200,307,302
+spec:
+  selector:
+    app: api-docs
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
