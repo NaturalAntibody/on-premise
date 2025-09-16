@@ -1,0 +1,1 @@
+Use of this Software is subject to the Standard Terms and the End User License Agreement (EULA). By downloading, installing, or using the Software, you acknowledge that you have read, understood, and agree to be bound by those documents.
