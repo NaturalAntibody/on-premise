@@ -78,7 +78,7 @@ spec:
                 name: token-secret
                 key: password
           - name: REDIS_URL
-            value: redis://redis.abstudio.svc.cluster.local
+            value: redis://redis.naturalantibody-platform-redis.svc.cluster.local
           - name: USERS_API_URL
             value: http://users.naturalantibody-platform.svc.cluster.local
         image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:latest

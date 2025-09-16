@@ -15,7 +15,6 @@ spec:
       labels:
         app: sequence-engineering-api
     spec:
-      serviceAccountName: sequence-engineering
       volumes:
       - name: persistent-storage
         persistentVolumeClaim:
