@@ -2,7 +2,7 @@
 
 # NaturalAntibody Platform
 
-This package provides an implementation of the on-premise version of the NaturalAntibody PLatform. Use of this Software is subject to the [Standard Terms and the End User License Agreement (EULA)](https://github.com/NaturalAntibody/on-premise/blob/master/EULA.pdf). By downloading, installing, or using the Software, you acknowledge that you have read, understood, and agree to the [Standard Terms and Conditions](https://github.com/NaturalAntibody/on-premise/blob/master/STANDARD%20TERMS%20AND%20CONDITIONS.pdf) and [End-User License Agreement](https://github.com/NaturalAntibody/on-premise/blob/master/LICENCE).
+This package provides an implementation of the on-premise version of the NaturalAntibody Platform. Use of this Software is subject to the [Standard Terms and the End User License Agreement (EULA)](https://github.com/NaturalAntibody/on-premise/blob/master/EULA.pdf). By downloading, installing, or using the Software, you acknowledge that you have read, understood, and agree to the [Standard Terms and Conditions](https://github.com/NaturalAntibody/on-premise/blob/master/STANDARD%20TERMS%20AND%20CONDITIONS.pdf) and [End-User License Agreement](https://github.com/NaturalAntibody/on-premise/blob/master/LICENCE).
 
 NaturalAntibody Platform is available for commercial and non-commercial use. You can learn more about our Platform at [naturalantibody.com](https://naturalantibody.com/).
 
