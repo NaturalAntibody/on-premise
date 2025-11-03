@@ -27,3 +27,30 @@ The Platform version consists of four main modules:
 See the [Setup for NaturalAntibody On Premise](https://github.com/NaturalAntibody/on-premise/blob/master/Setup%20for%20NaturalAntibody%20On%20Premise.pdf) pdf. Document outlines how to create a setup to run dockers that are needed to run our application in your environment. All the examples are based on how we did it with our infrastructure, but it should be as much service-agnostic as possible. In your case, some resources might have to be adjusted.
 
 We will provide you with an example of Kubernetes manifests. In this document we will sometimes reference names of those manifests when discussing applying it. We are using Fargate and EC2 for this setup.
+
+To create your own instance of the application and access our data stored on AWS S3 as well as images of the platform, please follow the steps below:
+
+1. Ensure AWS Access
+
+Make sure you have an AWS account with the necessary permissions to access our resources and that the AWS CLI is properly configured on your local environment.
+You can verify your setup by running:
+
+```aws sts get-caller-identity```
+
+2. Authenticate with Amazon ECR
+
+Before you can pull containers images from our Elastic Container Registry (ECR), you must first authenticate your client with AWS.
+Run the following command (replace the region if needed):
+
+ ```aws ecr get-login-password --region eu-central-1 | docker login --username AWS password-stdin 071253002612.dkr.ecr.eu-central-1.amazonaws.com```
+
+3. Pull application containers
+
+Once authenticated, you can pull the required containers stored on ECR repository using:
+
+```docker pull 071253002612.dkr.ecr.eu-central-1.amazonaws.com/<image-name>:<tag>```
+
+4. Access S3 Data
+
+After successful authentication, you can use AWS CLI or SDKs to download the necessary datasets or configuration files from our S3 bucket.
+These steps ensure your environment is properly connected and authorized to access all the resources required to run your own instance of the platform.
