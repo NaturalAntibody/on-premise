@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-gateway-repository-public:v1.0.0
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-api-gateway-repository-public:v1.0.1
           livenessProbe:
             httpGet:
               scheme: HTTP
@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: token-secret
                   key: password
+            - name: APP_INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: abstudio-secrets
+                  key: APP_INTERNAL_SECRET
             - name: REDIS_URL
               value: redis.naturalantibody-platform-redis.svc.cluster.local:6379
             - name: REDIS_TASKS_DB
@@ -63,6 +68,7 @@ spec:
               value: "true"
             - name: UI_URL
               value: https://platform.example.com
+
           ports:
             - name: http
               containerPort: 80

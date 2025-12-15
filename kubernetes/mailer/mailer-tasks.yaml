@@ -81,7 +81,25 @@ spec:
             value: redis://redis.naturalantibody-platform-redis.svc.cluster.local
           - name: USERS_API_URL
             value: http://users.naturalantibody-platform.svc.cluster.local
-        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:v1.0.0
+          - name: USE_SSL
+            value: "false"
+          - name: SMTP_SERVER
+            value: smtp.gmail.com
+          - name: PORT
+            value: '587'
+          - name: USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: client-configuration
+                key: username
+          - name: PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: client-configuration
+                key: password
+          - name: SENDER_EMAIL
+            value: "no-reply@example.com"
+        image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-mailer-repository-repository-public:v1.0.1
         imagePullPolicy: Always
         resources:
           requests:

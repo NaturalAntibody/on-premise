@@ -24,7 +24,7 @@ spec:
           claimName: efs-claim-uploads-sequence-engineering
       containers:
         - name: sequence-engineering-api
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:v1.0.0
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-sequence-engineering-repository:v1.0.1
           command: ["poetry", "run", "uvicorn", "sequence_engineering.infrastructure.app:app", "--host", "0.0.0.0"]
           volumeMounts:
             - name: persistent-storage
@@ -126,6 +126,8 @@ spec:
               value: /data/naturalness/models
             - name: NATURALNESS_DATA_DIR
               value: /data/naturalness/data
+            - name: INFERENCE_REDIS_URL
+              value: redis://redis.naturalantibody-platform-redis.svc.cluster.local:6379/0
           ports:
             - name: http
               containerPort: 80

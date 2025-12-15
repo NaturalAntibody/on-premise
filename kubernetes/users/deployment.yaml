@@ -51,7 +51,7 @@ spec:
         - name: FORGOT_PASSWORD_URL
           value: https://platform.example.com/forgot-password/reset
         - name: MAILER_API_URL
-          value: http://mailer.naturalantibody-platform-mongo.svc.cluster.local
+          value: http://mailer.naturalantibody-platform.svc.cluster.local
         - name: CHANGE_MAIL_URL
           value: https://platform.example.com/reset-email
         - name: REDIS_URL
@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               key: password
               name: token-secret
-          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-users-repository-public:v1.0.0
+          image: 071253002612.dkr.ecr.eu-central-1.amazonaws.com/naturalantibody-users-repository-public:v1.0.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
